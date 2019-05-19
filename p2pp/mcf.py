@@ -83,6 +83,8 @@ def gcode_filter_toolchange_block(line):
 
 
 def coordinate_on_bed(x, y):
+    if not v.side_wipe
+        return True
     if (v.bed_origin_x > x):
         return False
     if (x >= v.bed_origin_x + v.bed_size_x):
