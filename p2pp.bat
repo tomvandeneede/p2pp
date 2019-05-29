@@ -7,6 +7,6 @@ REM remove "REM" from the line below if you wish to pause before p2pp executes. 
 REM pause
 
 REM Edit the line below if you  need to change the python path.
-c:\python27\python.exe %MYPATH%\p2pp.py -i %1
+python %MYPATH%\p2pp.py -i %1
 
 pause
