@@ -682,7 +682,7 @@ def gcode_parseline(index):
 
     # check here issue with unretract
     #################################
-    if (g.X or g.Y) and v.retracted:
+    if (g.X or g.Y) and g.E > 0 and v.retracted:
         purgetower.unretract(v.current_tool)
         v.retracted = False
 
