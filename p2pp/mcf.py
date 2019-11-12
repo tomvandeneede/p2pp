@@ -460,10 +460,10 @@ def gcode_parseline(index):
 
         if g.fullcommand == "G4":
             g.move_to_comment("tool unload")
-        if g.is_unretract_command():
-            v.retracted = True
-            g.move_to_comment("tool unload")
         if g.is_movement_command():
+            if g.is_unretract_command():
+                v.retracted = True
+                g.move_to_comment("tool unload")
             if g.has_parameter("Z"):
                 g.remove_parameter("X")
                 g.remove_parameter("Y")
