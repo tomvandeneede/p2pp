@@ -128,6 +128,15 @@ class GCodeCommand:
         if parameter == "E":
             self.E = value
 
+        if parameter == "X":
+            self.X = value
+        if parameter == "Y":
+            self.Y = value
+        if parameter == "Z":
+            self.Z = value
+        if parameter == "E":
+            self.E = value
+
     def remove_parameter(self, parameter):
         if parameter in self.Parameters:
             if self.Comment:
@@ -144,7 +153,6 @@ class GCodeCommand:
                 self.Z = None
             if parameter == "E":
                 self.E = None
-
 
     def move_to_comment(self, text):
         if self.Command:
