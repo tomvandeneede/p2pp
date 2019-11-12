@@ -43,6 +43,11 @@ arguments.add_argument('-n',
                        action='store_true',
                        required=False
                        )
+arguments.add_argument('-g',
+                       '--ignore-warnings',
+                       action='store_true',
+                       required=False
+                       )                
 
 arguments.add_argument('-p',
                        '--printer-profile',
@@ -71,10 +76,8 @@ arguments.add_argument('-w',
 
 
 def main(args):
-    if not args['nogui']:
-        v.gui = True
-    else:
-        v.gui = False
+    v.gui = not args['nogui']
+    v.ignore_warnings = args['ignore_warnings']
 
     v.filename = args['input_file']
 
