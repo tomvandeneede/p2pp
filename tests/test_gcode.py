@@ -37,7 +37,7 @@ class TestGCodeCommand(unittest2.TestCase):
     def test_g1_output_format_is_correct(self):
         g = GCodeCommand("G1 F10 E10 Z10 Y10 X10")
         o = str(g)
-        self.assertEqual(o, "G1 X10.000 Y10.000 Z10.000 E10.0000 F10")
+        self.assertEqual(o, "G1 X10.000 Y10.000 Z10.000 E10.00000 F10\n")
 
     def test_parameter_is_updated(self):
         g = GCodeCommand("G1 X1")
