@@ -104,8 +104,6 @@ class GCodeCommand:
                 if value == None:
                     value = ""
 
-                p = p + "{}{} ".format(key, value)
-
         c = self.fullcommand
         if not c:
             c = ""
@@ -188,6 +186,8 @@ class GCodeCommand:
         return defaultvalue
 
     def issue_command(self):
+        if str(self) == "G92 E\n":
+            raise Exception("Bad")
         v.processed_gcode.append(str(self))
 
     def issue_command_speed(self, speed):
