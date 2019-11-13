@@ -15,10 +15,11 @@ import platform
 import sys
 
 import p2pp.checkversion as checkversion
-import p2pp.gui as gui
 import p2pp.mcf as mcf
 import p2pp.variables as v
 import version as ver
+
+from p2pp.log import LogService
 
 arguments = argparse.ArgumentParser(description='Generates MCF/Omega30 headers from an multi-tool/multi-extruder'
                                                 ' GCODE derived from Slic3r.')
@@ -100,8 +101,11 @@ if __name__ == "__main__":
     v.version = ver.Version
 
     if len(sys.argv) == 1:
-        platformD = platform.system()
+        import p2pp.gui as gui
+        from p2pp.gui_logger import GuiLogProvider
+        log = LogService(GuiLogProvider())
 
+        platformD = platform.system()
 
         MASTER_VERSION = checkversion.get_version(checkversion.MASTER)
         DEV_VERSION = checkversion.get_version(checkversion.DEV)
@@ -122,27 +126,27 @@ if __name__ == "__main__":
                 else:
                     v.version += " (Version up to date)"
                     color = "green"
-            gui.create_logitem(v.version, color , True)
+            log.info(v.version, color)
 
         gui.configinfo()
-        gui.create_emptyline()
-        gui.create_logitem("Line to be used in PrusaSlicer [Print Settings][Output Options][Post Processing Script]",
+        log.info()
+        log.info("Line to be used in PrusaSlicer [Print Settings][Output Options][Post Processing Script]",
                            "blue")
-        gui.create_emptyline()
+        log.info()
 
         if platformD == 'Darwin':
-            gui.create_logitem("{}/p2pp.command".format(os.path.dirname(sys.argv[0])), "red")
+            log.info("{}/p2pp.command".format(os.path.dirname(sys.argv[0])), "red")
         elif platformD == 'Windows':
-            gui.create_logitem("{}\\p2pp.bat".format(os.path.dirname(sys.argv[0])), "red")
+            log.info("{}\\p2pp.bat".format(os.path.dirname(sys.argv[0])), "red")
 
-        gui.create_emptyline()
-        gui.create_logitem("This requires ADVANCED/EXPERT settings to be enabled", "blue")
-        gui.create_emptyline()
-        gui.create_emptyline()
-        gui.create_logitem("Don't forget to complete the remaining Prusaslicer Configuration", "blue")
-        gui.create_logitem("More info on: https://github.com/tomvandeneede/p2pp", "blue")
+        log.info()
+        log.info("This requires ADVANCED/EXPERT settings to be enabled", "blue")
+        log.info()
+        log.info()
+        log.info("Don't forget to complete the remaining Prusaslicer Configuration", "blue")
+        log.info("More info on: https://github.com/tomvandeneede/p2pp", "blue")
         gui.close_button_enable()
     else:
-        gui.create_logitem("Python Version Information: "+platform.python_version() ,
-                           "blue")
+        log = LogService()
+        log.info("Python Version Information: "+platform.python_version(), "blue")
         main(vars(arguments.parse_args()))

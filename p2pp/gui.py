@@ -30,33 +30,6 @@ platformD = system()
 
 last_pct = -1
 
-
-def print_summary(summary):
-    create_logitem("")
-    create_logitem("-" * 19, "blue")
-    create_logitem("   Print Summary", "blue")
-    create_logitem("-" * 19, "blue")
-    create_emptyline()
-    create_logitem("Number of splices:    {0:5}".format(len(v.splice_extruder_position)))
-    create_logitem("Number of pings:      {0:5}".format(len(v.ping_extruder_position)))
-    create_logitem("Total print length {:-8.2f}mm".format(v.total_material_extruded))
-    create_emptyline()
-    if v.full_purge_reduction or v.tower_delta:
-        create_logitem("Tower Delta Range  {:.2f}mm -  {:.2f}mm".format(v.min_tower_delta, v.max_tower_delta))
-    create_emptyline()
-    create_logitem("Inputs/Materials used:")
-
-    for i in range(len(v.palette_inputs_used)):
-        if v.palette_inputs_used[i]:
-            create_colordefinition(i, v.filament_type[i], v.filament_color_code[i],
-                                   v.material_extruded_per_color[i])
-
-    create_emptyline()
-    for line in summary:
-        create_logitem(line[1:].strip(), "black", False)
-    create_emptyline()
-
-
 def progress_string(pct):
     global last_pct
     if last_pct == pct:
@@ -78,7 +51,6 @@ def completed(text, color):
 
 color_count = 0
 
-
 def create_logitem(text, color="black", force_update=True, position=tkinter.END):
     text = text.strip()
     global color_count
@@ -88,19 +60,6 @@ def create_logitem(text, color="black", force_update=True, position=tkinter.END)
     loglist.insert(position, "  " + text + "\n", tagname)
     if force_update:
         mainwindow.update()
-
-def create_colordefinition(input, filament_type, color_code, filamentused):
-    global color_count
-    color_count += 1
-    tagname = "color" + str(color_count)
-    color_count += 1
-    tagname2 = "color" + str(color_count)
-    loglist.tag_configure(tagname, foreground='black')
-    loglist.tag_configure(tagname2, foreground="#"+color_code)
-    loglist.insert(tkinter.END, "  \tInput  {} {:-8.2f}mm - {} ".format(input, filamentused, filament_type), tagname)
-    loglist.insert(tkinter.END, "  \t[####]\t", tagname2)
-    loglist.insert(tkinter.END, "  \t{}\n".format(colornames.find_nearest_colour(color_code)), tagname)
-
 
 def create_emptyline():
     create_logitem('')

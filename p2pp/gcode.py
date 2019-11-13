@@ -15,9 +15,7 @@ EXTRUDER = "E"
 RELATIVE = True
 ABSOLUTE = False
 
-import p2pp.gui as gui
 import p2pp.variables as v
-
 
 class GCodeCommand:
     Command = None
