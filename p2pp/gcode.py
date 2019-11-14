@@ -15,9 +15,8 @@ EXTRUDER = "E"
 RELATIVE = True
 ABSOLUTE = False
 
-import p2pp.gui as gui
 import p2pp.variables as v
-
+import p2pp.globals as app
 
 class GCodeCommand:
     Command = None
@@ -93,7 +92,7 @@ class GCodeCommand:
                         form = "{}{:0.5f} "
                     value = self.Parameters[key]
                     if value == None:
-                        gui.log_warning("GCode error detected, file might not print correctly")
+                        app.log.warning("GCode error detected, file might not print correctly")
                         value = ""
 
                     p = p + form.format(key, value)
@@ -128,6 +127,15 @@ class GCodeCommand:
         if parameter == "E":
             self.E = value
 
+        if parameter == "X":
+            self.X = value
+        if parameter == "Y":
+            self.Y = value
+        if parameter == "Z":
+            self.Z = value
+        if parameter == "E":
+            self.E = value
+
     def remove_parameter(self, parameter):
         if parameter in self.Parameters:
             if self.Comment:
@@ -144,7 +152,6 @@ class GCodeCommand:
                 self.Z = None
             if parameter == "E":
                 self.E = None
-
 
     def move_to_comment(self, text):
         if self.Command:

@@ -21,230 +21,193 @@ except ImportError:
 import os
 import sys
 from platform import system
+from os.path import dirname, abspath
 
 import p2pp.colornames as colornames
 import p2pp.variables as v
 import version
+from p2pp.log import LogProviderBase
 
-platformD = system()
-
-last_pct = -1
-
-
-def print_summary(summary):
-    create_logitem("")
-    create_logitem("-" * 19, "blue")
-    create_logitem("   Print Summary", "blue")
-    create_logitem("-" * 19, "blue")
-    create_emptyline()
-    create_logitem("Number of splices:    {0:5}".format(len(v.splice_extruder_position)))
-    create_logitem("Number of pings:      {0:5}".format(len(v.ping_extruder_position)))
-    create_logitem("Total print length {:-8.2f}mm".format(v.total_material_extruded))
-    create_emptyline()
-    if v.full_purge_reduction or v.tower_delta:
-        create_logitem("Tower Delta Range  {:.2f}mm -  {:.2f}mm".format(v.min_tower_delta, v.max_tower_delta))
-    create_emptyline()
-    create_logitem("Inputs/Materials used:")
-
-    for i in range(len(v.palette_inputs_used)):
-        if v.palette_inputs_used[i]:
-            create_colordefinition(i, v.filament_type[i], v.filament_color_code[i],
-                                   v.material_extruded_per_color[i])
-
-    create_emptyline()
-    for line in summary:
-        create_logitem(line[1:].strip(), "black", False)
-    create_emptyline()
-
-
-def progress_string(pct):
-    global last_pct
-    if last_pct == pct:
-        return
-    if pct == 100:
-        if len(v.process_warnings) == 0:
-            completed("  COMPLETED OK", '#008000')
-        else:
-            completed("  COMPLETED WITH WARNINGS",'#800000')
-    else:
-       progress.set(pct)
-    mainwindow.update()
-    last_pct = pct
-
-def completed(text, color):
-    progressbar.destroy()
-    progress_field = tkinter.Label(infosubframe , text=text, font=boldfont, foreground=color,  background="#808080")
-    progress_field.grid(row=3, column=2, sticky="ew")
-
-color_count = 0
-
-
-def create_logitem(text, color="black", force_update=True, position=tkinter.END):
-    text = text.strip()
-    global color_count
-    color_count += 1
-    tagname = "color"+str(color_count)
-    loglist.tag_configure(tagname, foreground=color)
-    loglist.insert(position, "  " + text + "\n", tagname)
-    if force_update:
-        mainwindow.update()
-
-def create_colordefinition(input, filament_type, color_code, filamentused):
-    global color_count
-    color_count += 1
-    tagname = "color" + str(color_count)
-    color_count += 1
-    tagname2 = "color" + str(color_count)
-    loglist.tag_configure(tagname, foreground='black')
-    loglist.tag_configure(tagname2, foreground="#"+color_code)
-    loglist.insert(tkinter.END, "  \tInput  {} {:-8.2f}mm - {} ".format(input, filamentused, filament_type), tagname)
-    loglist.insert(tkinter.END, "  \t[####]\t", tagname2)
-    loglist.insert(tkinter.END, "  \t{}\n".format(colornames.find_nearest_colour(color_code)), tagname)
-
-
-def create_emptyline():
-    create_logitem('')
-
-def close_window():
-    mainwindow.destroy()
-
-def update_button_pressed():
-    v.upgradeprocess(version.latest_stable_version , v.update_file_list)
-
-def close_button_enable():
-    closebutton.config(state=tkinter.NORMAL)
-    # WIP disable upgrade for now
-    # if not (v.upgradeprocess == None):
-    #     tkinter.Button(buttonframe, text='Upgrade to '+version.latest_stable_version, command=update_button_pressed).pack(side=tkinter.RIGHT)
-    mainwindow.mainloop()
-
-
-def center(win, width, height):
-    win.update_idletasks()
-    x = (win.winfo_screenwidth() // 2) - (width // 2)  # center horizontally in screen
-    y = (win.winfo_screenheight() // 2) - (height // 2)  # center vertically in screen
-    win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
-    win.minsize(width, height)
-    win.maxsize(width, height)
-
-
-def set_printer_id(text):
-    printerid.set(text)
-    mainwindow.update()
-
-
-def setfilename(text):
-    filename.set(text)
-    mainwindow.update()
-
-
-def user_error(header, body_text):
-    tkMessageBox.showinfo(header, body_text)
-
-
-def ask_yes_no(title, message):
-    return (tkMessageBox.askquestion(title, message).upper()=="YES")
-
-
-def log_warning(text):
-    v.process_warnings.append(";" + text)
-    create_logitem(text, "red")
-
-def configinfo():
-    global infosubframe
-    infosubframe.destroy()
-    infosubframe = tkinter.Frame(infoframe, border=3, relief='sunken', background="#909090")
-    infosubframe.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
-    tkinter.Label(infosubframe, text='CONFIGURATION  INFO', font=boldfontlarge, background="#909090").pack(side=tkinter.TOP, expand=1)
-
-    tkinter.Label(infosubframe, text="P2PP Version "+version.Version+"\n", font=boldfont, background="#909090").pack( side=tkinter.BOTTOM)
-
-
-mainwindow = tkinter.Tk()
-mainwindow.title("Palette2 Post Processing for PrusaSliceer")
-center(mainwindow, 800, 600)
-
-if platformD == 'Windows':
-    logo_image = os.path.dirname(sys.argv[0]) + '\\favicon.ico'
-    mainwindow.iconbitmap(logo_image)
-    mainwindow.update()
-
-mainwindow['padx'] = 10
-mainwindow['pady'] = 10
 boldfontlarge = 'Helvetica 30 bold'
 normalfont = 'Helvetica 16'
 boldfont = 'Helvetica 16 bold'
 fixedfont = 'Courier 14'
 fixedsmallfont = 'Courier 12'
 
-# Top Information Frqme
-infoframe = tkinter.Frame(mainwindow, border=3, relief='sunken', background="#808080")
-infoframe.pack(side=tkinter.TOP, fill=tkinter.X)
+class Gui(LogProviderBase):
+    last_pct = None
+    color_count = None
 
-# logo
-logoimage = tkinter.PhotoImage(file=os.path.dirname(sys.argv[0]) + "/appicon.ppm")
-logofield = tkinter.Label(infoframe, image=logoimage)
-logofield.pack(side=tkinter.LEFT, fill=tkinter.Y)
+    mainwindow = None
+    progress = None
+    loglist = None
+    closebuttron = None
+    progressbar = None
+    infosubframe = None
+    printerid = None
+    filename = None
+    logoimage = None
 
-infosubframe = tkinter.Frame(infoframe, background="#808080")
-infosubframe.pack(side=tkinter.LEFT, fill=tkinter.X)
-infosubframe["padx"] = 20
+    def __init__(self):
+        self.last_pct = -1
+        self.color_count = 0
 
-# file name display
-tkinter.Label(infosubframe, text='Filename:', font=boldfont, background="#808080").grid(row=0, column=1, sticky="w")
-filename = tkinter.StringVar()
-setfilename("-----")
-tkinter.Label(infosubframe, textvariable=filename, font=normalfont, background="#808080").grid(row=0, column=2,
-                                                                                               sticky="w")
+        self.mainwindow = tkinter.Tk()
+        self.mainwindow.title("Palette2 Post Processing for PrusaSliceer")
+        self.__center(self.mainwindow, 800, 600)
 
-# printer ID display
-printerid = tkinter.StringVar()
-set_printer_id("-----")
+        if system() == 'Windows':
+            logo_image = os.path.dirname(sys.argv[0]) + '\\favicon.ico'
+            self.mainwindow.iconbitmap(logo_image)
+            self.mainwindow.update()
 
-tkinter.Label(infosubframe, text='Printer ID:', font=boldfont, background="#808080").grid(row=1, column=1, sticky="w")
-tkinter.Label(infosubframe, textvariable=printerid, font=normalfont, background="#808080").grid(row=1, column=2,
-                                                                                                sticky="w")
+        self.mainwindow['padx'] = 10
+        self.mainwindow['pady'] = 10
 
+        # Top Information Frqme
+        self.infoframe = tkinter.Frame(self.mainwindow, border=3, relief='sunken', background="#808080")
+        self.infoframe.pack(side=tkinter.TOP, fill=tkinter.X)
 
-tkinter.Label(infosubframe, text="P2PP Version:", font=boldfont, background="#808080").grid(row=2, column=1,
-                                                                                            sticky="w")
-tkinter.Label(infosubframe, text=version.Version, font=normalfont, background="#808080").grid(row=2, column=2,
-                                                                                              sticky="w")
+        # logo
+        base_path = dirname(dirname(abspath(__file__)))
+        self.logoimage = tkinter.PhotoImage(file=base_path + "/appicon.ppm")
+        logofield = tkinter.Label(self.infoframe, image=self.logoimage)
+        logofield.pack(side=tkinter.LEFT, fill=tkinter.Y)
 
-# progress bar
-progress = tkinter.IntVar()
-progress.set(0)
-tkinter.Label(infosubframe, text='Progress:', font=boldfont, background="#808080").grid(row=3, column=1, sticky="w")
-progressbar = ttk.Progressbar(infosubframe ,orient='horizontal', mode='determinate', length=500, maximum=100, variable=progress)
-progressbar.grid(row=3, column=2,  sticky='ew')
+        self.infosubframe = tkinter.Frame(self.infoframe, background="#808080")
+        self.infosubframe.pack(side=tkinter.LEFT, fill=tkinter.X)
+        self.infosubframe["padx"] = 20
 
+        # file name display
+        tkinter.Label(self.infosubframe, text='Filename:', font=boldfont, background="#808080").grid(row=0, column=1, sticky="w")
+        self.filename = tkinter.StringVar()
+        self.setfilename("-----")
+        tkinter.Label(self.infosubframe, textvariable=self.filename, font=normalfont, background="#808080").grid(row=0, column=2,
+                                                                                                    sticky="w")
+        # printer ID display
+        self.printerid = tkinter.StringVar()
+        self.set_printer_id("-----")
 
-# Log frame
-logframe = tkinter.Frame(mainwindow, border=3, relief="sunken")
-logframe.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+        tkinter.Label(self.infosubframe, text='Printer ID:', font=boldfont, background="#808080").grid(row=1, column=1, sticky="w")
+        tkinter.Label(self.infosubframe, textvariable=self.printerid, font=normalfont, background="#808080").grid(row=1, column=2,
+                                                                                                        sticky="w")
 
-loglistscroll = tkinter.Scrollbar(logframe, orient=tkinter.VERTICAL)
-loglistscroll.pack(side='right', fill=tkinter.Y)
+        tkinter.Label(self.infosubframe, text="P2PP Version:", font=boldfont, background="#808080").grid(row=2, column=1,
+                                                                                                    sticky="w")
+        tkinter.Label(self.infosubframe, text=version.Version, font=normalfont, background="#808080").grid(row=2, column=2,
+                                                                                                    sticky="w")
 
-loglist = tkinter.Text(logframe, yscrollcommand=loglistscroll.set, font=fixedsmallfont)
-loglist.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=1)
+        # progress bar
+        self.progress = tkinter.IntVar()
+        self.progress.set(0)
+        tkinter.Label(self.infosubframe, text='Progress:', font=boldfont, background="#808080").grid(row=3, column=1, sticky="w")
+        self.progressbar = ttk.Progressbar(self.infosubframe ,orient='horizontal', mode='determinate', length=500, maximum=100, variable=self.progress)
+        self.progressbar.grid(row=3, column=2,  sticky='ew')
 
-loglistscroll.config(command=loglist.yview)
+        # Log frame
+        logframe = tkinter.Frame(self.mainwindow, border=3, relief="sunken")
+        logframe.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-# Button frame
-buttonframe = tkinter.Frame(mainwindow, border=1, relief="sunken")
-buttonframe.pack(side=tkinter.BOTTOM, fill=tkinter.X)
+        loglistscroll = tkinter.Scrollbar(logframe, orient=tkinter.VERTICAL)
+        loglistscroll.pack(side='right', fill=tkinter.Y)
 
-closebutton = tkinter.Button(buttonframe, text="Exit", state=tkinter.DISABLED, command=close_window)
-closebutton.pack(side=tkinter.RIGHT, fill=tkinter.X, expand=1)
+        self.loglist = tkinter.Text(logframe, yscrollcommand=loglistscroll.set, font=fixedsmallfont)
+        self.loglist.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=1)
 
+        loglistscroll.config(command=self.loglist.yview)
 
-mainwindow.rowconfigure(0, weight=1)
-mainwindow.rowconfigure(1, weight=1000)
-mainwindow.rowconfigure(2, weight=1)
+        # Button frame
+        buttonframe = tkinter.Frame(self.mainwindow, border=1, relief="sunken")
+        buttonframe.pack(side=tkinter.BOTTOM, fill=tkinter.X)
 
-mainwindow.lift()
-mainwindow.attributes('-topmost', True)
-mainwindow.after_idle(mainwindow.attributes, '-topmost', False)
-mainwindow.update()
+        self.closebutton = tkinter.Button(buttonframe, text="Exit", state=tkinter.DISABLED, command=self.close_window)
+        self.closebutton.pack(side=tkinter.RIGHT, fill=tkinter.X, expand=1)
 
+        self.mainwindow.rowconfigure(0, weight=1)
+        self.mainwindow.rowconfigure(1, weight=1000)
+        self.mainwindow.rowconfigure(2, weight=1)
+
+        self.mainwindow.lift()
+        self.mainwindow.attributes('-topmost', True)
+        self.mainwindow.after_idle(self.mainwindow.attributes, '-topmost', False)
+        self.mainwindow.update()
+
+    def progress_string(self, pct):
+        if self.last_pct == pct:
+            return
+        if pct == 100:
+            if len(v.process_warnings) == 0:
+                self.completed("  COMPLETED OK", '#008000')
+            else:
+                self.completed("  COMPLETED WITH WARNINGS",'#800000')
+        else:
+            self.progress.set(pct)
+            self.mainwindow.update()
+            self.last_pct = pct
+
+    def completed(self, text, color):
+        self.progressbar.destroy()
+        progress_field = tkinter.Label(self.infosubframe , text=text, font=boldfont, foreground=color,  background="#808080")
+        progress_field.grid(row=3, column=2, sticky="ew")
+
+    def close_window(self):
+        self.mainwindow.destroy()
+
+    def update_button_pressed(self):
+        v.upgradeprocess(version.latest_stable_version , v.update_file_list)
+ 
+    def close_button_enable(self):
+        self.closebutton.config(state=tkinter.NORMAL)
+        # WIP disable upgrade for now
+        # if not (v.upgradeprocess == None):
+        #     tkinter.Button(buttonframe, text='Upgrade to '+version.latest_stable_version, command=update_button_pressed).pack(side=tkinter.RIGHT)
+        self.mainwindow.mainloop()
+
+    def __center(self, win, width, height):
+        win.update_idletasks()
+        x = (win.winfo_screenwidth() // 2) - (width // 2)  # center horizontally in screen
+        y = (win.winfo_screenheight() // 2) - (height // 2)  # center vertically in screen
+        win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
+        win.minsize(width, height)
+        win.maxsize(width, height)
+
+    def set_printer_id(self, text):
+        self.printerid.set(text)
+        self.mainwindow.update()
+
+    def setfilename(self, text):
+        self.filename.set(text)
+        self.mainwindow.update()
+
+    def user_error(self, header, body_text):
+        tkMessageBox.showinfo(header, body_text)
+
+    def ask_yes_no(self, title, message):
+        return (tkMessageBox.askquestion(title, message).upper()=="YES")
+
+    def configinfo(self):
+        self.infosubframe.destroy()
+        self.infosubframe = tkinter.Frame(self.infoframe, border=3, relief='sunken', background="#909090")
+        self.infosubframe.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+        tkinter.Label(self.infosubframe, text='CONFIGURATION  INFO', font=boldfontlarge, background="#909090").pack(side=tkinter.TOP, expand=1)
+        tkinter.Label(self.infosubframe, text="P2PP Version "+version.Version+"\n", font=boldfont, background="#909090").pack( side=tkinter.BOTTOM)
+
+    def __create_logitem(self, text, color="black", force_update=True, position=tkinter.END):
+        text = text.strip()
+        self.color_count += 1
+        tagname = "color"+str(self.color_count)
+        self.loglist.tag_configure(tagname, foreground=color)
+        self.loglist.insert(position, "  " + text + "\n", tagname)
+        if force_update:
+            self.mainwindow.update()
+
+    def log_info(self, message, color):
+        self.__create_logitem(message, color)
+
+    def log_warning(self, message, color):
+        v.process_warnings.append(";" + message)
+        self.__create_logitem(message, "red")
+
+    def log_error(self, message, color):
+        v.process_warnings.append(";" + message)
+        self.__create_logitem(message, "red")

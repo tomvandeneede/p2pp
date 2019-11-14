@@ -9,9 +9,8 @@ __email__ = 'P2PP@pandora.be'
 
 import math
 
-import p2pp.gui as gui
 import p2pp.variables as v
-
+import p2pp.globals as app
 
 def gcode_remove_params(gcode, params):
     removed = False
@@ -142,7 +141,7 @@ def parse_slic3r_config():
                         if v.retract_length[i] == 0.0:
                             retract_error = True
             if retract_error:
-                gui.log_warning(
+                app.log.warning(
                     "[Printer Settings]->[Extruders 1/2/3/4]->[Retraction Length] should not be set to zero.")
             continue
 

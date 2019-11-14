@@ -15,10 +15,13 @@ import platform
 import sys
 
 import p2pp.checkversion as checkversion
-import p2pp.gui as gui
+import p2pp.globals as app
 import p2pp.mcf as mcf
 import p2pp.variables as v
 import version as ver
+
+from p2pp.log import LogService
+from p2pp.gui import Gui
 
 arguments = argparse.ArgumentParser(description='Generates MCF/Omega30 headers from an multi-tool/multi-extruder'
                                                 ' GCODE derived from Slic3r.')
@@ -43,6 +46,11 @@ arguments.add_argument('-n',
                        action='store_true',
                        required=False
                        )
+arguments.add_argument('-g',
+                       '--ignore-warnings',
+                       action='store_true',
+                       required=False
+                       )                
 
 arguments.add_argument('-p',
                        '--printer-profile',
@@ -69,36 +77,24 @@ arguments.add_argument('-w',
                        help='Wait for the user to press enter after processing the file. -w [0|1]'
                        )
 
-
-def main(args):
-    if not args['nogui']:
-        v.gui = True
-    else:
-        v.gui = False
-
-    v.filename = args['input_file']
-
-    if args["versioncheck"] == "1":
-        v.versioncheck = True
-
-    if args['wait'] == "1":
-        v.consolewait = True
-
-    mcf.generate(v.filename,
-                 args['output_file'],
-                 args['printer_profile'],
-                 args['splice_offset'],
-                 args['silent']
-                 )
-
-
-
 if __name__ == "__main__":
     v.version = ver.Version
 
+    args = vars(arguments.parse_args())
+    v.gui = not args['nogui']
+    v.ignore_warnings = args['ignore_warnings']
+    v.filename = args['input_file']
+    v.versioncheck = args["versioncheck"] == "1"
+    v.consolewait = args['wait'] == "1"
+
+    if v.gui:
+        app.gui = Gui()
+        app.log = LogService(app.gui)
+    else:
+        app.log = LogService()
+
     if len(sys.argv) == 1:
         platformD = platform.system()
-
 
         MASTER_VERSION = checkversion.get_version(checkversion.MASTER)
         DEV_VERSION = checkversion.get_version(checkversion.DEV)
@@ -119,27 +115,34 @@ if __name__ == "__main__":
                 else:
                     v.version += " (Version up to date)"
                     color = "green"
-            gui.create_logitem(v.version, color , True)
+            app.log.info(v.version, color)
 
-        gui.configinfo()
-        gui.create_emptyline()
-        gui.create_logitem("Line to be used in PrusaSlicer [Print Settings][Output Options][Post Processing Script]",
+        if v.gui: 
+            app.gui.configinfo()
+        app.log.info()
+        app.log.info("Line to be used in PrusaSlicer [Print Settings][Output Options][Post Processing Script]",
                            "blue")
-        gui.create_emptyline()
+        app.log.info()
 
         if platformD == 'Darwin':
-            gui.create_logitem("{}/p2pp.command".format(os.path.dirname(sys.argv[0])), "red")
+            app.log.info("{}/p2pp.command".format(os.path.dirname(sys.argv[0])), "red")
         elif platformD == 'Windows':
-            gui.create_logitem("{}\\p2pp.bat".format(os.path.dirname(sys.argv[0])), "red")
+            app.log.info("{}\\p2pp.bat".format(os.path.dirname(sys.argv[0])), "red")
 
-        gui.create_emptyline()
-        gui.create_logitem("This requires ADVANCED/EXPERT settings to be enabled", "blue")
-        gui.create_emptyline()
-        gui.create_emptyline()
-        gui.create_logitem("Don't forget to complete the remaining Prusaslicer Configuration", "blue")
-        gui.create_logitem("More info on: https://github.com/tomvandeneede/p2pp", "blue")
-        gui.close_button_enable()
+        app.log.info()
+        app.log.info("This requires ADVANCED/EXPERT settings to be enabled", "blue")
+        app.log.info()
+        app.log.info()
+        app.log.info("Don't forget to complete the remaining Prusaslicer Configuration", "blue")
+        app.log.info("More info on: https://github.com/tomvandeneede/p2pp", "blue")
+        if v.gui:
+            app.gui.close_button_enable()
     else:
-        gui.create_logitem("Python Version Information: "+platform.python_version() ,
-                           "blue")
-        main(vars(arguments.parse_args()))
+        log = LogService()
+        app.log.info("Python Version Information: "+platform.python_version(), "blue")
+        mcf.generate(v.filename,
+                     args['output_file'],
+                     args['printer_profile'],
+                     args['splice_offset'],
+                     args['silent']
+                     )
