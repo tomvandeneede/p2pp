@@ -1,25 +1,25 @@
 import unittest2
 import p2pp.variables as v
 from p2pp.log import LogService
+from p2pp.log import LogProviderBase
 
-class TestLogServiceMock():
+class TestLogServiceMock(LogProviderBase):
     errors = []
     warnings = []
     info = []
 
-    def log_error(self, message):
+    def log_error(self, message, color):
         self.errors.append(message)
 
-    def log_warning(self, message):
+    def log_warning(self, message, color):
         self.warnings.append(message)
 
-    def log_info(self, message):
+    def log_info(self, message, color):
         self.info.append(message)
 
 class TestLogService(unittest2.TestCase):
     def __create_logging_service(self):
-        log = LogService()
-        log.register_service(TestLogServiceMock())
+        log = LogService(TestLogServiceMock())
         return log
 
     def test_register_service(self):

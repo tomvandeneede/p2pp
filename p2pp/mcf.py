@@ -11,11 +11,12 @@ import os
 import time
 
 import p2pp.gcode as gcode
-import p2pp.gui as gui
 import p2pp.parameters as parameters
 import p2pp.pings as pings
 import p2pp.purgetower as purgetower
 import p2pp.variables as v
+import p2pp.globals as app
+
 from p2pp.gcodeparser import get_gcode_parameter, parse_slic3r_config
 from p2pp.omega import header_generate_omega, algorithm_process_material_configuration
 from p2pp.sidewipe import create_side_wipe
@@ -45,9 +46,9 @@ def optimize_tower_skip(skipmax, layersize):
             skipped_num += 1
 
     if skipped > 0:
-        gui.log_warning("Warning: Purge Tower delta in effect: {} Layers or {:-6.2f}mm".format(skipped_num, skipped))
+        app.log.warning("Warning: Purge Tower delta in effect: {} Layers or {:-6.2f}mm".format(skipped_num, skipped))
     else:
-        gui.create_logitem("Tower Purge Delta could not be applied to this print")
+        app.log.info("Tower Purge Delta could not be applied to this print")
 
 
 def convert_to_absolute():
@@ -101,14 +102,14 @@ def gcode_process_toolchange(new_tool, location, current_layer):
 
         if len(v.splice_extruder_position) == 1:
             if v.splice_length[0] < v.min_start_splice_length:
-                gui.log_warning("Warning : Short first splice (<{}mm) Length:{:-3.2f}".format(length,
+                app.log.warning("Warning : Short first splice (<{}mm) Length:{:-3.2f}".format(length,
                                                                                               v.min_start_splice_length))
 
                 filamentshortage = v.min_start_splice_length - v.splice_length[0]
                 v.filament_short[new_tool] = max(v.filament_short[new_tool], filamentshortage)
         else:
             if v.splice_length[-1] < v.min_splice_length:
-                gui.log_warning("Warning: Short splice (<{}mm) Length:{:-3.2f} Layer:{} Input:{}".
+                app.log.warning("Warning: Short splice (<{}mm) Length:{:-3.2f} Layer:{} Input:{}".
                                 format(v.min_splice_length, length, current_layer, v.current_tool))
                 filamentshortage = v.min_splice_length - v.splice_length[-1]
                 v.filament_short[new_tool] = max(v.filament_short[new_tool], filamentshortage)
@@ -240,7 +241,10 @@ def backpass(currentclass):
         # retract can be either a firmware retrct of a manually programmed unretract
         if (tmp.fullcommand == "G1" and tmp.E and tmp.has_parameter("F")) or (tmp.fullcommand == "G11"):
             v.gcodeclass[idx] = currentclass
-            v.retraction -= tmp.E
+            if tmp.has_E():
+                v.retraction -= tmp.E
+            else:
+                v.retraction = 0
             tmp = v.parsedgcode[idx - 1]
             if tmp.fullcommand == "G1" and tmp.has_Z():
                 v.gcodeclass[idx - 1] = currentclass
@@ -267,8 +271,8 @@ def parse_gcode():
 
     index = 0
     for line in v.input_gcode:
-
-        gui.progress_string(4 + 46 * index // total_line_count)
+        if v.gui:
+            app.gui.progress_string(4 + 46 * index // total_line_count)
 
         specifier = 0
         v.parsedgcode.append(gcode.GCodeCommand(line))
@@ -526,9 +530,9 @@ def gcode_parseline(index):
                 #                                purgetower.purge_height - 2 * v.extrusion_width)
                 purgetower.purge_create_layers(_x, _y, _w, _h)
                 # generate og items for the new purge tower
-                gui.create_logitem(
+                app.log.info(
                     " Purge Tower :Loc X{:.2f} Y{:.2f}  W{:.2f} H{:.2f}".format(_x, _y, _w, _h))
-                gui.create_logitem(
+                app.log.info(
                     " Layer Length Solid={:.2f}mm   Sparse={:.2f}mm".format(purgetower.sequence_length_solid,
                                                                             purgetower.sequence_length_empty))
                 # issue the new purge tower
@@ -733,54 +737,62 @@ def generate(input_file, output_file, printer_profile, splice_offset, silent):
             opf = open(input_file)
         except IOError:
             if v.gui:
-                gui.user_error("P2PP - Error Occurred", "Could not read input file\n'{}'".format(input_file))
+                app.gui.user_error("P2PP - Error Occurred", "Could not read input file\n'{}'".format(input_file))
             else:
                 print ("Could not read input file\n'{}".format(input_file))
             return
     except IOError:
         if v.gui:
-            gui.user_error("P2PP - Error Occurred", "Could not read input file\n'{}'".format(input_file))
+            app.gui.user_error("P2PP - Error Occurred", "Could not read input file\n'{}'".format(input_file))
         else:
             print ("Could not read input file\n'{}".format(input_file))
         return
 
-    gui.setfilename(input_file)
-    gui.set_printer_id(v.printer_profile_string)
-    gui.create_logitem("Reading File " + input_file)
-    gui.progress_string(1)
+    if v.gui:
+        app.gui.setfilename(input_file)
+        app.gui.set_printer_id(v.printer_profile_string)
+        app.gui.progress_string(1)
 
+    app.log.info("Reading File " + input_file)
+    
     v.input_gcode = opf.readlines()
     opf.close()
 
     v.input_gcode = [item.strip() for item in v.input_gcode]
 
-    gui.create_logitem("Analyzing slicer parameters")
-    gui.progress_string(2)
+    app.log.info("Analyzing slicer parameters")
+
+    if v.gui:
+        app.gui.progress_string(2)
+
     parse_slic3r_config()
 
-    gui.create_logitem("Pre-parsing GCode")
-    gui.progress_string(4)
+    app.log.info("Pre-parsing GCode")
+
+    if v.gui:
+        app.gui.progress_string(4)
+
     parse_gcode()
     if v.palette_plus:
         if v.palette_plus_ppm == -9:
-            gui.log_warning("P+ parameter P+PPM not set correctly in startup GCODE")
+            app.log.warning("P+ parameter P+PPM not set correctly in startup GCODE")
         if v.palette_plus_loading_offset == -9:
-            gui.log_warning("P+ parameter P+LOADINGOFFSET not set correctly in startup GCODE")
+            app.log.warning("P+ parameter P+LOADINGOFFSET not set correctly in startup GCODE")
 
     v.side_wipe = not coordinate_on_bed(v.wipetower_posx, v.wipetower_posy)
     v.tower_delta = v.max_tower_z_delta > 0
 
     if v.side_wipe:
-        gui.create_logitem("Side wipe activated", "blue")
+        app.log.info("Side wipe activated", "blue")
         if v.full_purge_reduction:
-            gui.log_warning("Full Purge Reduction is not compatible with Side Wipe, performing Side Wipe")
+            app.log.warning("Full Purge Reduction is not compatible with Side Wipe, performing Side Wipe")
             v.full_purge_reduction = False
 
     if v.full_purge_reduction:
         v.side_wipe = False
-        gui.create_logitem("Full Tower Reduction activated", "blue")
+        app.log.info("Full Tower Reduction activated", "blue")
         if v.tower_delta:
-            gui.log_warning("Full Purge Reduction is not compatible with Tower Delta, performing Full Purge Reduction")
+            app.log.warning("Full Purge Reduction is not compatible with Tower Delta, performing Full Purge Reduction")
             v.tower_delta = False
 
     v.pathprocessing = (v.tower_delta or v.full_purge_reduction or v.side_wipe)
@@ -788,18 +800,19 @@ def generate(input_file, output_file, printer_profile, splice_offset, silent):
     if v.tower_delta:
         optimize_tower_skip(v.max_tower_z_delta, v.layer_height)
 
-    gui.create_logitem("Generate processed GCode")
+    app.log.info("Generate processed GCode")
 
     total_line_count = len(v.input_gcode)
     v.retraction = 0
     for process_line_count in range(total_line_count):
         gcode_parseline(process_line_count)
-        gui.progress_string(50 + 50 * process_line_count // total_line_count)
+        if v.gui:
+            app.gui.progress_string(50 + 50 * process_line_count // total_line_count)
 
     if abs(v.min_tower_delta) >= min(v.retract_lift) + v.layer_height:
-        gui.log_warning("Increase retraction Z hop, {:2f}mm needed to print correctly".v.retract_lift[v.current_tool])
+        app.log.warning("Increase retraction Z hop, {:2f}mm needed to print correctly".v.retract_lift[v.current_tool])
         if abs(v.min_tower_delta) > min(v.retract_lift) + v.layer_height:
-            gui.log_warning("THIS FILE WILL NOT PRINT CORRECTLY")
+            app.log.warning("THIS FILE WILL NOT PRINT CORRECTLY")
     v.processtime = time.time() - starttime
 
     gcode_process_toolchange(-1, v.total_material_extruded, 0)
@@ -807,7 +820,7 @@ def generate(input_file, output_file, printer_profile, splice_offset, silent):
     header = omega_result['header'] + omega_result['summary'] + omega_result['warnings']
 
     if v.absolute_extruder and v.gcode_has_relative_e:
-        gui.create_logitem("Converting to absolute extrusion")
+        app.log.info("Converting to absolute extrusion")
         convert_to_absolute()
 
     # write the output file
@@ -815,7 +828,7 @@ def generate(input_file, output_file, printer_profile, splice_offset, silent):
 
     if not output_file:
         output_file = input_file
-    gui.create_logitem("Generating GCODE file: " + output_file)
+    app.log.info("Generating GCODE file: " + output_file)
     opf = open(output_file, "w")
     if not v.accessory_mode:
         opf.writelines(header)
@@ -825,7 +838,7 @@ def generate(input_file, output_file, printer_profile, splice_offset, silent):
         opf.write("T0\n")
 
     if v.splice_offset == 0:
-        gui.log_warning("SPLICE_OFFSET not defined")
+        app.log.warning("SPLICE_OFFSET not defined")
     opf.writelines(v.processed_gcode)
     opf.close()
 
@@ -836,14 +849,15 @@ def generate(input_file, output_file, printer_profile, splice_offset, silent):
             maffile = pre + ".msf"
         else:
             maffile = pre + ".maf"
-        gui.create_logitem("Generating PALETTE MAF/MSF file: " + maffile)
+        app.log.info("Generating PALETTE MAF/MSF file: " + maffile)
         opf = open(maffile, "w")
         for i in range(len(header)):
             if not header[i].startswith(";"):
                 opf.write(header[i])
 
-    gui.print_summary(omega_result['summary'])
+    app.log.summary(omega_result['summary'])
 
-    gui.progress_string(100)
-    if (len(v.process_warnings) > 0 and not v.ignore_warnings) or v.consolewait:
-        gui.close_button_enable()
+    if v.gui:
+        app.gui.progress_string(100)
+        #if (len(v.process_warnings) > 0 and not v.ignore_warnings) or v.consolewait:
+        app.gui.close_button_enable()

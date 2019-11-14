@@ -16,6 +16,7 @@ RELATIVE = True
 ABSOLUTE = False
 
 import p2pp.variables as v
+import p2pp.globals as app
 
 class GCodeCommand:
     Command = None
@@ -91,7 +92,7 @@ class GCodeCommand:
                         form = "{}{:0.5f} "
                     value = self.Parameters[key]
                     if value == None:
-                        gui.log_warning("GCode error detected, file might not print correctly")
+                        app.log.warning("GCode error detected, file might not print correctly")
                         value = ""
 
                     p = p + form.format(key, value)
@@ -101,6 +102,8 @@ class GCodeCommand:
                 value = self.Parameters[key]
                 if value == None:
                     value = ""
+
+                p = p + "{}{} ".format(key, value)
 
         c = self.fullcommand
         if not c:

@@ -5,13 +5,13 @@ import p2pp.colornames as colornames
 
 class LogProviderBase:
     def log_error(self, message, color):
-        print("Error: " + message + "\n", sys.stderr)
+        print("Error: " + message, sys.stderr)
 
     def log_warning(self, message, color):
-        print("Warning: " + message + "\n")
+        print("Warning: " + message)
 
     def log_info(self, message, color):
-        print(message + "\n")
+        print(message)
 
 class LogService:
     __service = None
@@ -56,9 +56,7 @@ class LogService:
                 filament_color = '#' + v.filament_color_code[i]
                 filament_color_name = colornames.find_nearest_colour(filament_color)
                 
-                self.info("  \tInput  {} {:-8.2f}mm - {} ".format(i, filament_used, filament_type), filament_color)
-                self.info("  \t[####]\t", filament_color)
-                self.info("  \t{}\n".format(filament_color_name), filament_color)
+                self.info("  \tInput  {} {:-8.2f}mm - {} \t[####]\t\t{}".format(i, filament_used, filament_type, filament_color_name), filament_color)
 
         self.info("")
         for line in summary:

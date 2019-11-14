@@ -7,7 +7,7 @@ __license__ = 'GPLv3'
 __maintainer__ = 'Tom Van den Eede'
 __email__ = 'P2PP@pandora.be'
 
-import p2pp.gui as gui
+import p2pp.globals as app
 import p2pp.variables as v
 from p2pp.colornames import find_nearest_colour
 from p2pp.formatnumbers import hexify_short, hexify_float, hexify_long, hexify_byte
@@ -77,7 +77,7 @@ def algorithm_create_table():
             try:
                 algo = v.splice_algorithm_dictionary["{}{}".format(v.filament_type[i], v.filament_type[j])]
             except (IndexError, KeyError):
-                gui.log_warning("WARNING: No Algorithm defined for transitioning" +
+                app.log.warning("WARNING: No Algorithm defined for transitioning" +
                             " {} to {}. Using Default".format(v.filament_type[i],
                                                               v.filament_type[j]))
                 algo = v.default_splice_algorithm
@@ -92,14 +92,14 @@ def algorithm_create_table():
 ############################################################################
 def header_generate_omega(job_name):
     if v.printer_profile_string == '':
-        gui.log_warning("The PRINTERPROFILE identifier is missing, Please add:\n" +
+        app.log.warning("The PRINTERPROFILE identifier is missing, Please add:\n" +
                     ";P2PP PRINTERPROFILE=<your printer profile ID>\n" +
                     "to your Printers Start GCODE.\n")
 
     if len(v.splice_extruder_position) == 0:
-        gui.log_warning("This does not look like a multi-colour file.\n")
+        app.log.warning("This does not look like a multi-colour file.\n")
         if v.gui:
-            if gui.ask_yes_no('Not a Multi-Colour file?',
+            if app.gui.ask_yes_no('Not a Multi-Colour file?',
                               "This doesn't look like a multi-colour file. Skip processing?"):
                 exit(1)
         else:
@@ -163,7 +163,7 @@ def header_generate_omega_palette2(job_name):
 
     if v.printer_profile_string == '':
         v.printer_profile_string = v.default_printerprofile
-        gui.log_warning("No or Invalid Printer profile ID specified\nusing default P2PP printer profile ID {}"
+        app.log.warning("No or Invalid Printer profile ID specified\nusing default P2PP printer profile ID {}"
                         .format(v.default_printerprofile))
 
     header.append('O22 D' + v.printer_profile_string.strip("\n") + "\n")  # PRINTERPROFILE used in Palette2
@@ -260,7 +260,7 @@ def generatesummary():
         summary.append( pingtext )
 
     if v.side_wipe and v.side_wipe_loc == "":
-        gui.log_warning("Using sidewipe with undefined SIDEWIPELOC!!!")
+        app.log.warning("Using sidewipe with undefined SIDEWIPELOC!!!")
 
 
     return summary
