@@ -445,9 +445,10 @@ def gcode_parseline(index):
 
     if g.Command == 'T':
         gcode_process_toolchange(int(g.Command_value), v.total_material_extruded, g.Layer)
-        if not v.debug_leaveToolCommands:
+        if v.enableCustomToolCommand:
             gcode.issue_code(";-- P2PP -- Added 'P' command for Palette support of filament manager")
             gcode.issue_code("P" + g.Command_value)
+        if not v.debug_leaveToolCommands:
             g.move_to_comment("Color Change")
 
         g.issue_command()

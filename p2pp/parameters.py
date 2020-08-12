@@ -286,3 +286,7 @@ def check_config_parameters(keyword, value):
         v.debug_leaveToolCommands = True
         gui.log_warning("DEBUGTCOMMAND ACTIVE - File will not print correctly!!")
         return
+
+    if keyword == "ENABLECUSTOMTOOLCOMMAND":
+        v.enableCustomToolCommand = True
+        return

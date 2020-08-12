@@ -243,6 +243,7 @@ wipe_remove_sparse_layers = False
 ps_version = "No version info detected"
 
 debug_leaveToolCommands = False
+enableCustomToolCommand = False
 
 synced_support = True
 prints_support = False
