@@ -88,8 +88,11 @@ def calculate_loadscheme():
     for idx in range(len(v.m4c_toolchanges)):
         nexttools.append(calc_next(-1, v.m4c_toolchanges[idx:]))
 
-    loadedinputs = deepcopy(nexttools[0][:4])
-    loadedinputs.sort()
+    if len(nexttools) > 0:
+        loadedinputs = deepcopy(nexttools[0][:4])
+        loadedinputs.sort()
+    else:
+        loadedinputs = []
 
     for idx in range(len(v.m4c_toolchanges) - 2):
 
