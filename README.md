@@ -157,7 +157,7 @@ your printer for a new printer profile.
 2. Near the top of the gcode there should be a line starting with "O22 Dxxxxxxxxxxxxxxxxxxxx".
 3. Copy _everything_ **_after_** the "D". This is your Printer Profile ID. Note this down and have it ready for the next steps. (Copy and paste, don't type it).
 E.G. If your O22 line reads "O22 De827315ff39aaaaa", then your printer profile is: e827315ff39aaaaa  
-4. Make sure the bed origin and bed siwe are defined correctly. p2pp will remove all extrusion outside of the bed.  Leaving the default values (for Prusa MK3) might result in failed prints.
+4. Make sure the bed origin and bed size are defined correctly. p2pp will remove all extrusion outside of the bed.  Leaving the default values (for Prusa MK3) might result in failed prints.
 
 ### Printer Settings
 1. In Slic3r, Click the "Printer Settings Tab".
