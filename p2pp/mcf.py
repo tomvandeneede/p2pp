@@ -349,6 +349,18 @@ def gcode_parselines():
                 if not v.debug_leaveToolCommands:
                     gcode.move_to_comment(g, "--P2PP-- Color Change")
                     v.toolchange_processed = True
+            elif g[gcode.COMMAND] == 'ACTIVATE_EXTRUDER':
+                extruder = gcode.get_parameter(g, gcode. OTHER, None)
+                extruder_num = None
+                if extruder == ' EXTRUDER=extruder':
+                    extruder_num = 0
+                elif extruder.startswith(' EXTRUDER=extruder'):
+                    extruder_num = int(extruder[18:])
+                if extruder_num is not None:
+                    gcode_process_toolchange(extruder_num)
+                if not v.debug_leaveToolCommands:
+                    gcode.move_to_comment(g, "--P2PP-- Color Change")
+                    v.toolchange_processed = True
             else:
                 if current_block_class == CLS_TOOL_UNLOAD:
                     if g[gcode.COMMAND] in ["G4", "M900"]:
