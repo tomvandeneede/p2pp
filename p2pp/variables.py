@@ -207,6 +207,8 @@ min_tower_delta = 0.0
 retract_x = None
 retract_y = None
 
+large_retract = 3
+
 purge_pos_x = 0
 purge_pos_y = 0
 

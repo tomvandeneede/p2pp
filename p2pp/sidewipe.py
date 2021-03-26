@@ -163,7 +163,7 @@ def create_side_wipe(length=0):
                 sweep = min(v.side_wipe_length, 50)
                 issue_code("G1 E{:.5f} F{}".format(sweep, v.wipe_feedrate))
                 purgetower.largeretract()  # 3mm retraction cycle to dislodge potential stuck filament
-                purgetower.unretract(v.current_tool, v.wipe_feedrate)
+                purgetower.unretract(v.current_tool, v.wipe_feedrate, "", True)
                 v.side_wipe_length -= sweep
 
         else:
