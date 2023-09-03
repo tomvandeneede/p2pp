@@ -2,7 +2,7 @@
 
 ## Getting strarted
 
-Have a look at the [P2PP Wiki pages](https://github.com/tomvandeneede/p2pp/wiki/Home) to get youstarted.
+Have a look at the [P2PP Wiki pages](https://github.com/tomvandeneede/p2pp/wiki/Home) to get you started.
 
 
 ## Acknowledgements
